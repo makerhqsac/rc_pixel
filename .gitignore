@@ -29,6 +29,8 @@
 *.app
 
 /**/.idea
+/**/cmake
+/**/Makefile
 /**/cmake-build-debug
 
 .DS_Store
