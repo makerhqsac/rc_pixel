@@ -10,8 +10,8 @@
 #define PULSE_WIDTH_DEADBAND    100 // pulse width difference from RC_PULSE_CENTER us (microseconds) to ignore (to compensate trim and drift)
 #define RC_PULSE_TIMEOUT        1000 // in milliseconds
 
-#define RC_TURN_CHANNEL         0
-#define RC_TURN_INPUT           2 // arduino pin connected to R/C receiver
+#define RC_INPUT_CHANNEL        0
+#define RC_INPUT_PIN            2 // arduino pin connected to R/C receiver
 
 #define RC_NUM_CHANNELS         1
 
@@ -31,7 +31,7 @@
 #define LED_LEFT_REVERSE
 //#define LED_RIGHT_REVERSE
 
-#define LED_OUTPUT              4 // arduino pin with leds
+#define LED_PIN                 4 // arduino pin with leds
 
 
 enum state_t {
@@ -45,7 +45,7 @@ uint16_t rc_values[RC_NUM_CHANNELS];
 uint32_t rc_start[RC_NUM_CHANNELS];
 volatile uint16_t rc_shared[RC_NUM_CHANNELS];
 
-Adafruit_NeoPixel leds = Adafruit_NeoPixel(LED_COUNT, LED_OUTPUT, LED_TYPE);
+Adafruit_NeoPixel leds = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_TYPE);
 
 volatile long last_rc_pulse = 0;
 long anim_start = 0;
@@ -53,7 +53,7 @@ long debug_time = millis();
 long show_time = millis();
 
 volatile boolean rc_process = false;
-volatile uint16_t rc_turn_pulse = 0;
+volatile uint16_t rc_input = 0;
 state_t state = STATE_IDLE;
 
 void disable_rc_processing();
@@ -72,14 +72,14 @@ void rc_read_values() {
     memcpy(rc_values, (const void *)rc_shared, sizeof(rc_shared));
     interrupts();
 
-    rc_turn_pulse = (int)rc_values[RC_TURN_CHANNEL];
+    rc_input = (int)rc_values[RC_INPUT_CHANNEL];
 
     if (millis() - last_rc_pulse > RC_PULSE_TIMEOUT) {
-        rc_turn_pulse = 0;
+        rc_input = 0;
     }
 }
 
-void calc_input(uint8_t channel, uint8_t input_pin) {
+void calc_pulse(uint8_t channel, uint8_t input_pin) {
     if (rc_process) {
         if (digitalRead(input_pin) == HIGH) {
             rc_start[channel] = (uint32_t )micros();
@@ -95,12 +95,12 @@ void calc_input(uint8_t channel, uint8_t input_pin) {
     }
 }
 
-void calc_turn() { calc_input(RC_TURN_CHANNEL, RC_TURN_INPUT); }
+void calc_rc_input() { calc_pulse(RC_INPUT_CHANNEL, RC_INPUT_PIN); }
 
 void setup() {
 //    Serial.begin(9600);
 
-    enableInterrupt(RC_TURN_INPUT, calc_turn, CHANGE);
+    enableInterrupt(RC_INPUT_PIN, calc_rc_input, CHANGE);
 
 #if defined (__AVR_ATtiny85__)
     if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
@@ -214,15 +214,15 @@ void run_state_no_rc() {
 }
 
 boolean is_rc_left() {
-    return rc_turn_pulse > 0 && rc_turn_pulse < (RC_PULSE_CENTER - PULSE_WIDTH_DEADBAND);
+    return rc_input > 0 && rc_input < (RC_PULSE_CENTER - PULSE_WIDTH_DEADBAND);
 }
 
 boolean is_rc_right() {
-    return rc_turn_pulse > (RC_PULSE_CENTER + PULSE_WIDTH_DEADBAND);
+    return rc_input > (RC_PULSE_CENTER + PULSE_WIDTH_DEADBAND);
 }
 
 boolean is_rc_ok() {
-    return rc_turn_pulse > 0;
+    return rc_input > 0;
 }
 
 
