@@ -11,7 +11,7 @@
 #define RC_PULSE_TIMEOUT        1000 // in milliseconds
 
 #define RC_INPUT_CHANNEL        0
-#define RC_INPUT_PIN            2 // arduino pin connected to R/C receiver
+#define RC_INPUT_PIN            3 // arduino pin connected to R/C receiver
 
 #define RC_NUM_CHANNELS         1
 
